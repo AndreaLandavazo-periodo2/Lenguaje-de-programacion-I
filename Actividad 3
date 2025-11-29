@@ -1,0 +1,103 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+#include <iomanip>
+
+// Función auxiliar para convertir a mayúsculas y quitar espacios extra
+std::string limpiar_cadena(std::string s) {
+    // Convertir a mayúsculas
+    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+    // Eliminar espacios al principio/final y simplificar espacios intermedios
+    // (Implementación básica, se podría mejorar con regex o algoritmos más avanzados)
+    std::string resultado = "";
+    bool espacio_previo = false;
+    for (char c : s) {
+        if (std::isspace(c)) {
+            if (!espacio_previo) {
+                resultado += ' ';
+                espacio_previo = true;
+            }
+        } else {
+            resultado += c;
+            espacio_previo = false;
+        }
+    }
+    // Eliminar espacio final si existe
+    if (!resultado.empty() && std::isspace(resultado.back())) {
+        resultado.pop_back();
+    }
+    return resultado;
+}
+
+// Función para verificar si un carácter es vocal
+bool es_vocal(char c) {
+    return (c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U');
+}
+
+std::string calcular_rfc_base(const std::string& nombre, const std::string& apellido_paterno, const std::string& apellido_materno, int dia, int mes, int anio) {
+    std::string ap_paterno_l = limpiar_cadena(apellido_paterno);
+    std::string ap_materno_l = limpiar_cadena(apellido_materno);
+    std::string nombre_l = limpiar_cadena(nombre);
+
+    std::string rfc = "";
+
+    // 1. Primer carácter: Primera letra del apellido paterno
+    if (!ap_paterno_l.empty()) {
+        rfc += ap_paterno_l[0];
+    } else {
+        // Manejo de error o caso especial si no hay apellido paterno
+        rfc += 'X'; // O alguna otra lógica según reglas del SAT
+    }
+
+    // 2. Segunda vocal: Primera vocal interna del apellido paterno
+    size_t pos_vocal = ap_paterno_l.find_first_of("AEIOU", 1);
+    if (pos_vocal != std::string::npos) {
+        rfc += ap_paterno_l[pos_vocal];
+    } else {
+        rfc += 'X'; // Si no se encuentra vocal interna
+    }
+
+    // 3. Tercer carácter: Primera letra del apellido materno
+    if (!ap_materno_l.empty()) {
+        rfc += ap_materno_l[0];
+    } else {
+        rfc += 'X'; // En caso de no tener apellido materno
+    }
+
+    // 4. Cuarto carácter: Primera letra del nombre
+    if (!nombre_l.empty()) {
+        rfc += nombre_l[0];
+    }
+
+
+    // 5. Fecha de nacimiento (AAMMDD)
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0') << (anio % 100)
+       << std::setw(2) << std::setfill('0') << mes
+       << std::setw(2) << std::setfill('0') << dia;
+    rfc += ss.str();
+
+    return rfc;
+}
+
+int main() {
+    std::string nombre, ap_paterno, ap_materno;
+    int dia, mes, anio;
+
+    std::cout << "Ingrese nombre(s): ";
+    std::getline(std::cin, nombre);
+    std::cout << "Ingrese apellido paterno: ";
+    std::getline(std::cin, ap_paterno);
+    std::cout << "Ingrese apellido materno: ";
+    std::getline(std::cin, ap_materno);
+    std::cout << "Ingrese fecha de nacimiento (dia mes anio): ";
+    std::cin >> dia >> mes >> anio;
+
+    std::string rfc_generado = calcular_rfc_base(nombre, ap_paterno, ap_materno, dia, mes, anio);
+
+    std::cout << "\nEl RFC base (sin homoclave) es: " << rfc_generado << std::endl;
+
+    return 0;
+}
